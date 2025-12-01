@@ -1,5 +1,6 @@
 # SmartMirrorProject
 This project proposes the development of a Smart Mirror System using two Arduino microcontrollers—one acting as a Master (handling Bluetooth communication) and the other as a Slave (driving a TFT display). The system receives user-defined data from a custom Android application built using MIT App Inventor.
+
 🧠Objective:
 •	To design and implement a smart mirror capable of displaying real-time information.
 •	To establish wireless communication between a mobile application and the mirror system using Bluetooth.
