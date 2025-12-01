@@ -1,0 +1,44 @@
+#include <SPI.h>
+
+#define SS_PIN 10
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(SS_PIN, OUTPUT);
+  digitalWrite(SS_PIN, HIGH);
+
+  SPI.begin();
+  SPI.setClockDivider(SPI_CLOCK_DIV8);
+
+  Serial.println("MASTER READY");
+}
+
+void loop() {
+
+
+  //  Android app will send commands from Serial or Bluetooth.
+
+  if (Serial.available()) {
+    String msg = Serial.readStringUntil('\n');
+    msg.trim();
+    sendSPI(msg);
+  }
+}
+
+void sendSPI(String msg) {
+  digitalWrite(SS_PIN, LOW);
+
+  for (int i = 0; i < msg.length(); i++) {
+    SPI.transfer(msg[i]);
+    delay(3);
+  }
+
+  SPI.transfer('\n');  // end of message
+
+  digitalWrite(SS_PIN, HIGH);
+  delay(10);
+
+  Serial.print("Sent: ");
+  Serial.println(msg);
+}
