@@ -6,6 +6,8 @@ This project proposes the development of a Smart Mirror System using two Arduino
 •	To establish wireless communication between a mobile application and the mirror system using Bluetooth.
 •	To demonstrate a stable master–slave communication protocol between two Arduino boards.
 •	To display time and custom messages using a TFT display.
+
+
 🛠 Hardware Components:
 •	Arduino Uno (Master)
 Handles Bluetooth communication.
@@ -16,6 +18,8 @@ Receives data from the Android app.
 •	TFT Display (2.4” LCD)
 Displays time and text.
 •	Two-Way Mirror 
+
+
 🎀Conclusion:
 The project demonstrates a functional smart mirror system utilizing dual Arduinos for modular design. The Master Arduino effectively handles Bluetooth communication while the Slave Arduino manages the display output. 
 
