@@ -1,0 +1,133 @@
+#include <MCUFRIEND_kbv.h>
+#include <SPI.h>
+
+#define BLACK 0x0000
+#define WHITE 0xFFFF
+
+MCUFRIEND_kbv tft;
+
+// Clock variables
+int hour_ = 0;
+int minute_ = 0;
+int second_ = 0;
+
+unsigned long lastMillis = 0;
+
+// SPI incoming buffer
+volatile char spiBuffer[40];
+volatile byte spiIndex = 0;
+volatile bool newTimeFlag = false;
+
+// operating mode
+bool displayClock = false;  
+bool displayText = false;   
+String textMessage = "";
+
+void setup() {
+  Serial.begin(9600);
+
+  // TFT setup
+  uint16_t ID = tft.readID();
+  tft.begin(ID);
+  tft.setRotation(1);
+  tft.fillScreen(BLACK);
+  tft.setTextColor(WHITE);
+
+  tft.setTextSize(3);
+  tft.setCursor(0, 50);
+  tft.print("SMART MIRROR READY");
+
+  // SPI slave setup
+  pinMode(MISO, OUTPUT);
+  SPCR |= _BV(SPE);
+  SPI.attachInterrupt();
+}
+
+// SPI interrupt (receives characters)
+ISR(SPI_STC_vect) {
+  char c = SPDR;
+
+  if (spiIndex == 0) {
+    memset(spiBuffer, 0, sizeof(spiBuffer));
+  }
+
+  if (c == '\n') {
+    spiBuffer[spiIndex] = '\0';
+    newTimeFlag = true;
+    spiIndex = 0;
+  } else {
+    if (spiIndex < sizeof(spiBuffer) - 1) {
+      spiBuffer[spiIndex++] = c;
+    }
+  }
+}
+
+void loop() {
+
+  // -------- PROCESS NEW DATA ---------
+  if (newTimeFlag) {
+    newTimeFlag = false;
+
+    String received = String((char*)spiBuffer);
+    received.trim();
+    Serial.print("Received: ");
+    Serial.println(received);
+
+    // ----- OFF CLOCK -----
+    if (received == "-1") {
+      displayClock = false;
+      displayText = false;
+      textMessage = "";
+      tft.fillScreen(BLACK);
+    }
+
+    // ----- TIME -----
+    else if (received.length() == 8 && received.charAt(2) == ':' && received.charAt(5) == ':') {
+      hour_   = received.substring(0, 2).toInt();
+      minute_ = received.substring(3, 5).toInt();
+      second_ = received.substring(6, 8).toInt();
+
+      displayClock = true;
+      displayText = false;
+    }
+
+    // ----- TEXT MESSAGE -----
+    else {
+      textMessage = received;
+      displayText = true;
+      displayClock = false;
+
+      tft.fillScreen(BLACK);
+      tft.setTextSize(4);
+      tft.setCursor(10, 10);
+      tft.print(textMessage);
+    }
+  }
+
+  // -------- CLOCK UPDATE ---------
+  if (displayClock) {
+    if (millis() - lastMillis >= 1000) {
+      lastMillis += 1000;
+      second_++;
+
+      if (second_ >= 60) { second_ = 0; minute_++; }
+      if (minute_ >= 60) { minute_ = 0; hour_++; }
+      if (hour_ >= 24)   { hour_ = 0; }
+
+      tft.fillRect(0, 0, 320, 120, BLACK);
+      tft.setTextSize(5);
+      tft.setCursor(30, 40);
+
+      if (hour_ < 10) tft.print("0");
+      tft.print(hour_);
+      tft.print(":");
+
+      if (minute_ < 10) tft.print("0");
+      tft.print(minute_);
+      tft.print(":");
+
+      if (second_ < 10) tft.print("0");
+      tft.print(second_);
+    }
+  }
+}
